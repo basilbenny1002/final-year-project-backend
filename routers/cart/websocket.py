@@ -1,16 +1,12 @@
 import json
 import os
+from typing import Dict
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 router = APIRouter()
 
-# Helper function to check if the cart ID is in our JSON file
 def is_cart_valid(cart_id: str) -> bool:
-    """
-    Returns True if the cart_id exists in carts.json, otherwise False.
-    parameter cart_id: The ID of the cart to validate.
-    return: True if valid, False if not.
-    """
     if not os.path.exists("carts.json"):
         print("carts.json not found!", flush=True)
         return False
@@ -19,12 +15,31 @@ def is_cart_valid(cart_id: str) -> bool:
         data = json.load(file)
         return cart_id in data.get("valid_carts", [])
 
+
+class CartConnectionManager:
+    def __init__(self) -> None:
+        self._connections: Dict[str, WebSocket] = {}
+
+    async def connect(self, cart_id: str, websocket: WebSocket) -> None:
+        await websocket.accept()
+        self._connections[cart_id] = websocket
+
+    def disconnect(self, cart_id: str) -> None:
+        self._connections.pop(cart_id, None)
+
+    async def send_unlock(self, cart_id: str) -> bool:
+        websocket = self._connections.get(cart_id)
+        if not websocket:
+            return False
+
+        await websocket.send_json({"command": "unlock"})
+        return True
+
+
+manager = CartConnectionManager()
+
 @router.websocket("/ws/{cart_id}")
-async def websocket_endpoint(websocket: WebSocket, cart_id: str):
-    """
-    Websocket endpoint for cart connections. Validates the cart ID against a JSON file before accepting the connection.
-    parameter websocket: The WebSocket connection object.
-    """
+async def websocket_endpoint(websocket: WebSocket, cart_id: str) -> None:
     # 1. Check the cart ID against the JSON before accepting
     if not is_cart_valid(cart_id):
         print(f"Connection rejected: Cart '{cart_id}' is not in the system.", flush=True)
@@ -32,7 +47,7 @@ async def websocket_endpoint(websocket: WebSocket, cart_id: str):
         return
     
     # 2. Accept the connection if valid
-    await websocket.accept()
+    await manager.connect(cart_id, websocket)
     print(f"Cart '{cart_id}' connected successfully!", flush=True)
     
     try:
@@ -42,4 +57,10 @@ async def websocket_endpoint(websocket: WebSocket, cart_id: str):
             print(f"[Cart: {cart_id}] Scanned Item: {item_data}", flush=True)
             
     except WebSocketDisconnect:
+        manager.disconnect(cart_id)
         print(f"Cart '{cart_id}' disconnected.", flush=True)
+
+
+async def send_unlock_to_cart(cart_id: str) -> bool:
+    """Send an unlock command to a specific cart if connected."""
+    return await manager.send_unlock(cart_id)
