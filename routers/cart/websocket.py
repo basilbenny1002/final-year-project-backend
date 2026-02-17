@@ -4,6 +4,9 @@ from typing import Dict
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from database.products import get_product
+from routers.frontend.websocket import send_item_to_frontend
+
 router = APIRouter()
 
 def is_cart_valid(cart_id: str) -> bool:
@@ -55,6 +58,8 @@ async def websocket_endpoint(websocket: WebSocket, cart_id: str) -> None:
         while True:
             item_data = await websocket.receive_text()
             print(f"[Cart: {cart_id}] Scanned Item: {item_data}", flush=True)
+            item_info = get_product(int(item_data))
+            send_item_to_frontend(cart_id, item_info["name"], item_info["price"])
             
     except WebSocketDisconnect:
         manager.disconnect(cart_id)
