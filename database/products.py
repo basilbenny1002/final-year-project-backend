@@ -3,8 +3,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-CONNECTION_STRING = os.getenv("SQLITECLOUD_CONNECTION_STRING", "file:products.db?mode=memory&cache=shared")
-"sqlitecloud://ctcpmeyddk.g2.sqlite.cloud:8860/auth.sqlitecloud?apikey=D23T1v7Owb17rMKEPq0RUlkpFCeq0IuagoGBupmHWlA"
+CONNECTION_STRING = os.getenv("SQLITECLOUD_CONNECTION_STRING")
 def init_db():
     conn = sqlitecloud.connect(CONNECTION_STRING)
     cursor = conn.cursor()
