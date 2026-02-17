@@ -59,7 +59,10 @@ async def websocket_endpoint(websocket: WebSocket, cart_id: str) -> None:
             item_data = await websocket.receive_text()
             print(f"[Cart: {cart_id}] Scanned Item: {item_data}", flush=True)
             item_info = get_product(int(item_data))
-            send_item_to_frontend(cart_id, item_info["name"], item_info["price"])
+            if item_info:
+                await send_item_to_frontend(cart_id, item_info["name"], item_info["price"])
+            else:
+                print(f"Product {item_data} not found in database.", flush=True)
             
     except WebSocketDisconnect:
         manager.disconnect(cart_id)
