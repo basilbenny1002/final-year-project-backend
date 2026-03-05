@@ -1,10 +1,10 @@
-from fastapi import FastAPI
+from fastapi import APIRouter
 from models.payment import NotificationPayload
 
-app = FastAPI()
+router = APIRouter()
 
 
-@app.post("/") 
+@router.post("/") 
 async def receive_payment_notification(data: NotificationPayload):
     print("----- New Notification Received -----", flush=True)
     print(f"Title:   {data.title}", flush=True)
