@@ -37,6 +37,14 @@ class FrontendConnectionManager:
         await websocket.send_json({"item_name": item_name, "price": price})
         return True
 
+    async def send_payment_success(self, cart_id: str) -> bool:
+        websocket = self._connections.get(cart_id)
+        if not websocket:
+            return False
+            
+        await websocket.send_json({"type": "payment_success", "message": "Payment Successful"})
+        return True
+
 
 manager = FrontendConnectionManager()
 
@@ -68,3 +76,10 @@ async def send_item_to_frontend(cart_id: str, item_name: str, price: float) -> b
     Returns True if a frontend was connected and the message was sent.
     """
     return await manager.send_item(cart_id, item_name, price)
+
+async def send_payment_success_to_frontend(cart_id: str) -> bool:
+    """
+    Send a payment success message to the connected frontend for a specific cart.
+    Returns True if a frontend was connected and the message was sent.
+    """
+    return await manager.send_payment_success(cart_id)
