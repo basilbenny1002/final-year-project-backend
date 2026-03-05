@@ -1,27 +1,15 @@
-from fastapi import FastAPI, Request
-from zoneinfo import ZoneInfo
-from datetime import datetime
+from fastapi import FastAPI
+from models.payment import NotificationPayload
 
 app = FastAPI()
 
-@app.post("/payment")
-async def receive_payment(notification: Request):
-    data = await notification.json()
 
-
-    amount = data.get("message")
-
-    print("Payment Message Received!")
-  
-    print(f"Amount: {amount}")
-
-    rupees = int(amount.split()[-1][1:])
-    time = datetime.now(ZoneInfo("Asia/Kolkata"))
+@app.post("/") 
+async def receive_payment_notification(data: NotificationPayload):
+    print("----- New Notification Received -----", flush=True)
+    print(f"Title:   {data.title}", flush=True)
+    print(f"Content: {data.content}", flush=True)
     
-
-    return {
-        "message": "Payment received successfully",
-        "received_data": data,
-        "rupees": rupees,
-        "time": time.isoformat()
-    }
+    # You can now parse 'data.content' to extract amounts, names, etc.
+    
+    return {"message": "Notification received successfully"}
