@@ -5,10 +5,16 @@ load_dotenv()
 
 CONNECTION_STRING = os.getenv("SQLITECLOUD_CONNECTION_STRING")
 def init_db():
-    conn = sqlitecloud.connect(CONNECTION_STRING)
-    cursor = conn.cursor()
+    try:
+        conn = sqlitecloud.connect(CONNECTION_STRING)
+        cursor = conn.cursor()
+    except Exception as e:
+        print(f"Error connecting to database: {e}")
+        return
+
     cursor.execute("""
         DROP TABLE products;
+
                    
     """)
     # Create table if not exists with correct column names
