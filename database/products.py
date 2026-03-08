@@ -108,7 +108,7 @@ def get_product(product_id: int):
 
 if __name__ == "__main__":
     # init_db() # Run this once to initialize the database
-    init_stocks()
+    #init_stocks()
     # Example usage:
     # print(get_product(100))
     pass
