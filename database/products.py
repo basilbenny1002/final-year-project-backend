@@ -106,6 +106,17 @@ def get_product(product_id: int):
     finally:
         conn.close()
 
+def update_product_stock(name: str, quantity: int):
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE stocks SET stock_count = stock_count - ? WHERE name = ?", (quantity, name))
+        conn.commit()
+    except Exception as e:
+        print(f"Error updating stock for {name}: {e}")
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     # init_db() # Run this once to initialize the database
     #init_stocks()
