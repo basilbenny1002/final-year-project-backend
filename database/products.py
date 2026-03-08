@@ -106,6 +106,56 @@ def get_product(product_id: int):
     finally:
         conn.close()
 
+def init_transactions():
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DROP TABLE IF EXISTS transactions") 
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                purchase_id TEXT NOT NULL,
+                product_name TEXT NOT NULL,
+                price REAL NOT NULL,
+                quantity INTEGER NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        print("Transactions table initialized successfully.")
+    except Exception as e:
+        print(f"An error occurred during transactions initialization: {e}")
+    finally:
+        conn.close()
+
+def get_product_price(name: str):
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT price FROM products WHERE name = ?", (name,))
+        result = cursor.fetchone()
+        return result[0] if result else 0
+    except Exception as e:
+        print(f"Error fetching price for {name}: {e}")
+        return 0
+    finally:
+        conn.close()
+
+def insert_transaction(purchase_id: str, product_name: str, price: float, quantity: int):
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO transactions (purchase_id, product_name, price, quantity) VALUES (?, ?, ?, ?)",
+            (purchase_id, product_name, price, quantity)
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"Error inserting transaction: {e}")
+    finally:
+        conn.close()
+
 def update_product_stock(name: str, quantity: int):
     conn = sqlitecloud.connect(CONNECTION_STRING)
     cursor = conn.cursor()
@@ -119,7 +169,8 @@ def update_product_stock(name: str, quantity: int):
 
 if __name__ == "__main__":
     # init_db() # Run this once to initialize the database
-    #init_stocks()
+    # init_stocks()
+    init_transactions()
     # Example usage:
     # print(get_product(100))
     pass
