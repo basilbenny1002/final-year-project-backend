@@ -170,7 +170,7 @@ def update_product_stock(name: str, quantity: int):
 if __name__ == "__main__":
     # init_db() # Run this once to initialize the database
     # init_stocks()
-    init_transactions()
+    # init_transactions()
     # Example usage:
     # print(get_product(100))
     pass
