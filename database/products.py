@@ -167,6 +167,90 @@ def update_product_stock(name: str, quantity: int):
     finally:
         conn.close()
 
+
+def get_all_stocks():
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT product_id, name, price, stock_count FROM stocks ORDER BY product_id")
+        rows = cursor.fetchall()
+        return [
+            {
+                "product_id": row[0],
+                "name": row[1],
+                "price": row[2],
+                "stock_count": row[3],
+            }
+            for row in rows
+        ]
+    except Exception as e:
+        print(f"Error fetching stocks: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def get_all_transactions():
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id, purchase_id, product_name, price, quantity, created_at
+            FROM transactions
+            ORDER BY created_at DESC, id DESC
+            """
+        )
+        rows = cursor.fetchall()
+        return [
+            {
+                "id": row[0],
+                "purchase_id": row[1],
+                "product_name": row[2],
+                "price": row[3],
+                "quantity": row[4],
+                "created_at": row[5],
+            }
+            for row in rows
+        ]
+    except Exception as e:
+        print(f"Error fetching transactions: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def get_recent_transactions(limit: int = 5):
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id, purchase_id, product_name, price, quantity, created_at
+            FROM transactions
+            ORDER BY created_at DESC, id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+        rows = cursor.fetchall()
+        return [
+            {
+                "id": row[0],
+                "purchase_id": row[1],
+                "product_name": row[2],
+                "price": row[3],
+                "quantity": row[4],
+                "created_at": row[5],
+            }
+            for row in rows
+        ]
+    except Exception as e:
+        print(f"Error fetching recent transactions: {e}")
+        return []
+    finally:
+        conn.close()
+
 if __name__ == "__main__":
     # init_db() # Run this once to initialize the database
     # init_stocks()

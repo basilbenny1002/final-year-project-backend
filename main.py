@@ -4,6 +4,7 @@ from routers.cart.websocket import router as cart_websocket_router
 from routers.frontend.websocket import router as frontend_websocket_router
 from payment_handler.payment import router as payment_router
 from routers.stocks import router as stocks_router
+from routers.admin import router as admin_router
 
 app = FastAPI()
 
@@ -21,3 +22,4 @@ app.include_router(cart_websocket_router)
 app.include_router(frontend_websocket_router)
 app.include_router(payment_router)
 app.include_router(stocks_router)
+app.include_router(admin_router)
