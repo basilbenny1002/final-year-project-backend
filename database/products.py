@@ -2,6 +2,7 @@ import sqlitecloud
 from dotenv import load_dotenv
 import os
 import random
+from datetime import datetime
 
 load_dotenv()
 
@@ -57,7 +58,9 @@ def init_stocks():
                 product_id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
                 price REAL NOT NULL,
-                stock_count INTEGER NOT NULL
+                stock_count INTEGER NOT NULL,
+                last_updated_by TEXT,
+                last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
@@ -78,9 +81,9 @@ def init_stocks():
         for product in products:
             p_id, name, price = product
             stock = random.randint(20, 40)
-            stock_data.append((p_id, name, price, stock))
+            stock_data.append((p_id, name, price, stock, "system", datetime.utcnow()))
 
-        cursor.executemany("INSERT OR REPLACE INTO stocks (product_id, name, price, stock_count) VALUES (?, ?, ?, ?)", stock_data)
+        cursor.executemany("INSERT OR REPLACE INTO stocks (product_id, name, price, stock_count,last_updated_by,last_updated_at) VALUES (?, ?, ?, ?)", stock_data)
         conn.commit()
         print("Stocks table initialized successfully.")
     except Exception as e:
@@ -160,7 +163,13 @@ def update_product_stock(name: str, quantity: int):
     conn = sqlitecloud.connect(CONNECTION_STRING)
     cursor = conn.cursor()
     try:
-        cursor.execute("UPDATE stocks SET stock_count = stock_count - ? WHERE name = ?", (quantity, name))
+        cursor.execute("""
+    UPDATE stocks 
+    SET stock_count = stock_count - ?, 
+        last_updated_by = ?, 
+        last_updated_at = ?
+    WHERE name = ?
+""", (quantity, "admin", datetime.utcnow(), name))
         conn.commit()
     except Exception as e:
         print(f"Error updating stock for {name}: {e}")
@@ -172,7 +181,7 @@ def get_all_stocks():
     conn = sqlitecloud.connect(CONNECTION_STRING)
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT product_id, name, price, stock_count FROM stocks ORDER BY product_id")
+        cursor.execute("SELECT product_id, name, price, stock_count,last_updated_by, last_updated_at  FROM stocks ORDER BY product_id")
         rows = cursor.fetchall()
         return [
             {
@@ -180,6 +189,8 @@ def get_all_stocks():
                 "name": row[1],
                 "price": row[2],
                 "stock_count": row[3],
+                "last_updated_by": row[4],
+                "last_updated_at": row[5],
             }
             for row in rows
         ]
@@ -253,7 +264,7 @@ def get_recent_transactions(limit: int = 5):
 
 if __name__ == "__main__":
     # init_db() # Run this once to initialize the database
-    # init_stocks()
+    init_stocks()
     # init_transactions()
     # Example usage:
     # print(get_product(100))
