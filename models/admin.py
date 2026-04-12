@@ -8,6 +8,8 @@ class StockRecord(BaseModel):
     name: str
     price: float
     stock_count: int
+    last_updated_by: Optional[str] = None
+    last_updated_at: Optional[str] = None
 
 
 class TransactionRecord(BaseModel):
