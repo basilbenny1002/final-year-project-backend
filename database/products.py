@@ -189,6 +189,51 @@ def get_all_stocks():
     finally:
         conn.close()
 
+def add_or_update_product_stock(product_id: int, name: str, price: float, number: int):
+    conn = sqlitecloud.connect(CONNECTION_STRING)
+    cursor = conn.cursor()
+    try:
+        # Check by product_id
+        cursor.execute("SELECT product_id, name, price, stock_count FROM stocks WHERE product_id = ?", (product_id,))
+        prod_by_id = cursor.fetchone()
+        
+        # Check by name
+        cursor.execute("SELECT product_id, name, price, stock_count FROM stocks WHERE name = ?", (name,))
+        prod_by_name = cursor.fetchone()
+        
+        if prod_by_id:
+            db_id, db_name, db_price, db_stock = prod_by_id
+            
+            if db_name.lower() != name.lower():
+                return {"success": False, "error": f"Product ID {product_id} exists but with a different name ({db_name})"}
+            
+            new_count = db_stock + number
+            if db_price != price:
+                cursor.execute("UPDATE stocks SET stock_count = ?, price = ? WHERE product_id = ?", (new_count, price, product_id))
+                cursor.execute("UPDATE products SET price = ? WHERE product_id = ?", (price, product_id))
+            else:
+                cursor.execute("UPDATE stocks SET stock_count = ? WHERE product_id = ?", (new_count, product_id))
+            
+            conn.commit()
+            return {"success": True, "message": "Existing product stock updated successfully"}
+            
+        elif prod_by_name:
+            db_id = prod_by_name[0]
+            return {"success": False, "error": f"Product name '{name}' exists but with a different ID ({db_id})"}
+            
+        else:
+            # Completely new product
+            cursor.execute("INSERT INTO products (product_id, name, price) VALUES (?, ?, ?)", (product_id, name, price))
+            cursor.execute("INSERT INTO stocks (product_id, name, price, stock_count) VALUES (?, ?, ?, ?)", (product_id, name, price, number))
+            conn.commit()
+            return {"success": True, "message": "New product added successfully"}
+            
+    except Exception as e:
+        print(f"Error in add_or_update_product_stock: {e}")
+        return {"success": False, "error": "Internal server error"}
+    finally:
+        conn.close()
+
 
 def get_all_transactions():
     conn = sqlitecloud.connect(CONNECTION_STRING)
